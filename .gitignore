@@ -1,4 +1,2 @@
 /.vscode
-/a.exe
-/best-fst-search.exe
-/pq_test.exe
+*.exe
