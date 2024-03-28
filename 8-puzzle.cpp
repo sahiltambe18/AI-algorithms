@@ -1,29 +1,35 @@
-#include<iostream>
-#include<vector>
-#include<set>
-#include<unordered_map>
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <set>
 using namespace std;
 
-vector<vector<int>> puzzle = {
-    {1,6,8},
-    {7,5,2},
-    {3,4,0}
+struct state
+{
+    vector<vector<int>> puzzle;
+    int cost, level;
 };
+
+vector<vector<int>> puzzle = {
+    {2, 8, 3},
+    {1, 6, 4},
+    {7, 0, 5}};
 
 vector<vector<int>> finalState = {
-    {1,2,3},
-    {4,5,6},
-    {7,8,0} // consider 0 as empty tile
+    {1, 2, 3},
+    {8, 0, 4},
+    {7, 6, 5} // consider 0 as empty tile
 };
 
-set<vector<vector<int>>> st;
-unordered_map<int, vector<vector<vector<int>>>> mp;
-
-int fscore(const vector<vector<int>>& currState) {
+int fscore(const vector<vector<int>> &currState)
+{
     int h = 0;
-    for(size_t i = 0; i < currState.size(); i++) {
-        for(size_t j = 0; j < currState[0].size(); j++) {
-            if(currState[i][j] != finalState[i][j]) {
+    for (size_t i = 0; i < currState.size(); i++)
+    {
+        for (size_t j = 0; j < currState[0].size(); j++)
+        {
+            if (currState[i][j] != finalState[i][j])
+            {
                 h++;
             }
         }
@@ -31,60 +37,156 @@ int fscore(const vector<vector<int>>& currState) {
     return h;
 }
 
-void solve(vector<vector<int>>& currState, int g, int x, int y) {
-    if(st.find(currState) != st.end()) {
-        return;
+state CalculatFscore(state temp)
+{
+    int cost = fscore(temp.puzzle);
+    temp.level++;
+    temp.cost = cost + temp.level;
+    if (cost == 0)
+    {
+        temp.cost = 0;
     }
-    st.insert(currState);
-    mp[g].push_back(currState) ;
-
-    int h = fscore(currState);
-    if(h == 0) {
-        return;
-    }
-
-    // Try moving up
-    if(x - 1 >= 0) {
-        swap(currState[x][y], currState[x - 1][y]);
-        solve(currState, g + 1, x - 1, y);
-        swap(currState[x][y], currState[x - 1][y]); // Backtrack
-    }
-
-    // Try moving down
-    if(x + 1 < currState.size()) {
-        swap(currState[x][y], currState[x + 1][y]);
-        solve(currState, g + 1, x + 1, y);
-        swap(currState[x][y], currState[x + 1][y]); // Backtrack
-    }
-
-    // Try moving left
-    if(y - 1 >= 0) {
-        swap(currState[x][y], currState[x][y - 1]);
-        solve(currState, g + 1, x, y - 1);
-        swap(currState[x][y], currState[x][y - 1]); // Backtrack
-    }
-
-    // Try moving right
-    if(y + 1 < currState[0].size()) {
-        swap(currState[x][y], currState[x][y + 1]);
-        solve(currState, g + 1, x, y + 1);
-        swap(currState[x][y], currState[x][y + 1]); // Backtrack
-    }
+    return temp;
 }
 
-int main() {
-    solve(puzzle, 0, 2, 2);
-    for(auto& kv : mp) {
-        cout << "Steps: " << kv.first << endl;
-        for(auto& v : kv.second) {
-            for(auto& val : v) {
-                for(auto& vv : val) {
-                    cout<<vv<<" ";
-                }cout<<endl;
+struct CompareState
+{
+    bool operator()(const state &s1, const state &s2)
+    {
+        if (s1.cost == s2.cost)
+        {
+            return s1.level > s2.level;
+        }
+        return s1.cost > s2.cost;
+    }
+};
+
+vector<int> locateZero(state curr)
+{
+    vector<int> v;
+    for (int x = 0; x < 3; x++)
+    {
+        for (int y = 0; y < 3; y++)
+        {
+            // cout << "x: " << x << ", y: " << y << " [x][y]= "<< curr.puzzle[x][y]<< endl;
+
+            if (curr.puzzle[x][y] == 0)
+            {
+                v.push_back(x);
+                v.push_back(y);
+                return v;
             }
-            cout << endl;
+        }
+    }
+    return {0, 0};
+}
+
+void display(state curr)
+{
+    for (int x = 0; x < 3; x++)
+    {
+        for (int y = 0; y < 3; y++)
+        {
+            cout << curr.puzzle[x][y] << " ";
         }
         cout << endl;
     }
+
+    cout << "cost : " << curr.cost << endl;
+    cout << "level : " << curr.level << endl;
+}
+
+void solve()
+{
+    state initial;
+    set<vector<vector<int>>> st;
+    initial.puzzle = puzzle;
+    initial.cost = 0 + fscore(initial.puzzle);
+
+    priority_queue<state, vector<state>, CompareState> pq;
+    pq.push(initial);
+
+    while (!pq.empty())
+    {
+        state curr = pq.top();
+
+        display(curr);
+        if (curr.cost == 0)
+        {
+            cout << "done" << endl;
+            return;
+            // break;
+        }
+        pq.pop();
+
+        // find pos of empty space
+        vector<int> pos = locateZero(curr);
+        int x = pos[0];
+        int y = pos[1];
+
+        // move empty space up
+        if (x > 0)
+        {
+            state temp = curr; // temp copy
+            int val = temp.puzzle[x - 1][y];
+            temp.puzzle[x - 1][y] = 0;
+            temp.puzzle[x][y] = val;
+            temp = CalculatFscore(temp);
+            if (st.find(temp.puzzle) == st.end())
+            {
+                pq.push(temp);
+            }
+            // cout << "x: " << x << ", y: " << y << endl;
+        }
+
+        if (x < 2)
+        {
+            state temp = curr;
+            int val = temp.puzzle[x + 1][y];
+            temp.puzzle[x + 1][y] = 0;
+            temp.puzzle[x][y] = val;
+
+            temp = CalculatFscore(temp);
+            if (st.find(temp.puzzle) == st.end())
+            {
+                pq.push(temp);
+            }
+        }
+
+        if (y > 0)
+        {
+            state temp = curr;
+            int val = temp.puzzle[x][y - 1];
+            temp.puzzle[x][y - 1] = 0;
+            temp.puzzle[x][y] = val;
+
+            temp = CalculatFscore(temp);
+            if (st.find(temp.puzzle) == st.end())
+            {
+                pq.push(temp);
+            }
+        }
+
+        if (y < 2)
+        {
+            state temp = curr;
+            int val = temp.puzzle[x][y + 1];
+            temp.puzzle[x][y + 1] = 0;
+            temp.puzzle[x][y] = val;
+
+            temp = CalculatFscore(temp);
+            if (st.find(temp.puzzle) == st.end())
+            {
+                pq.push(temp);
+            }
+        }
+    }
+    cout << "succeeded";
+}
+
+int main()
+{
+    solve();
+    cout << fscore(puzzle);
     return 0;
 }
