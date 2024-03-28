@@ -7,7 +7,7 @@ using namespace std;
 struct state
 {
     vector<vector<int>> puzzle;
-    int cost, level;
+    int cost, level , h;
 };
 
 vector<vector<int>> puzzle = {
@@ -24,9 +24,9 @@ vector<vector<int>> finalState = {
 int fscore(const vector<vector<int>> &currState)
 {
     int h = 0;
-    for (size_t i = 0; i < currState.size(); i++)
+    for (int i = 0; i < currState.size(); i++)
     {
-        for (size_t j = 0; j < currState[0].size(); j++)
+        for (int j = 0; j < currState[0].size(); j++)
         {
             if (currState[i][j] != finalState[i][j])
             {
@@ -41,11 +41,8 @@ state CalculatFscore(state temp)
 {
     int cost = fscore(temp.puzzle);
     temp.level++;
-    temp.cost = cost + temp.level;
-    if (cost == 0)
-    {
-        temp.cost = 0;
-    }
+    temp.h = cost;
+    temp.cost = cost==0 ? 0 : cost + temp.level;
     return temp;
 }
 
@@ -92,8 +89,10 @@ void display(state curr)
         cout << endl;
     }
 
-    cout << "cost : " << curr.cost << endl;
+    cout << "h : " << curr.h << endl;
     cout << "level : " << curr.level << endl;
+    cout << "cost : " << curr.cost << endl;
+    cout<< endl;
 }
 
 void solve()
@@ -101,7 +100,9 @@ void solve()
     state initial;
     set<vector<vector<int>>> st;
     initial.puzzle = puzzle;
-    initial.cost = 0 + fscore(initial.puzzle);
+    initial.cost = fscore(initial.puzzle);
+    initial.h = fscore(initial.puzzle);
+    initial.level = 0;
 
     priority_queue<state, vector<state>, CompareState> pq;
     pq.push(initial);
@@ -186,7 +187,137 @@ void solve()
 
 int main()
 {
+
+    cout<<"give positions for puzzle"<<endl;
+    for (int i = 0; i < 3; i++)
+    {
+        for(int j = 0; j < 3; j++){
+            cout<< "enter the value : "<<endl;
+            cin>> puzzle[i][j];
+        }
+    }
+    
+    cout<<"give positions for final State"<<endl;
+    for (int i = 0; i < 3; i++)
+    {
+        for(int j = 0; j < 3; j++){
+            cout<< "enter the value : "<<endl;
+            cin>> finalState[i][j];
+        }
+    }
+
     solve();
+
     //cout << fscore(puzzle);
     return 0;
 }
+
+
+/*
+
+PS E:\code\AI> g++ .\8-puzzle.cpp 
+PS E:\code\AI> ./a.exe
+give positions for puzzle
+enter the value :
+2
+enter the value :
+8
+enter the value :
+3
+enter the value :
+1
+enter the value :
+6
+enter the value :
+4
+enter the value :
+7
+enter the value :
+0
+enter the value :
+5
+give positions for final State
+enter the value :
+1
+enter the value :
+2
+enter the value :
+3
+enter the value :
+8
+enter the value :
+0
+enter the value :
+4
+enter the value :
+7
+enter the value :
+6
+enter the value :
+5
+2 8 3
+1 6 4
+7 0 5
+h : 5
+level : 0
+cost : 5
+
+2 8 3
+1 0 4
+7 6 5
+h : 3
+level : 1
+cost : 4
+
+2 0 3
+1 8 4
+7 6 5 
+h : 4
+level : 2
+cost : 6
+
+2 8 3
+0 1 4
+7 6 5
+h : 4
+level : 2
+cost : 6
+
+2 8 3
+1 0 4
+7 6 5
+h : 3
+level : 3
+cost : 6
+
+0 2 3 
+1 8 4
+7 6 5
+h : 3
+level : 3
+cost : 6
+
+2 8 3
+1 0 4
+7 6 5
+h : 3
+level : 3
+cost : 6
+
+1 2 3
+0 8 4
+7 6 5
+h : 2
+level : 4
+cost : 6
+
+1 2 3
+8 0 4
+7 6 5
+h : 0
+level : 5
+cost : 0
+
+done
+PS E:\code\AI> 
+*/
