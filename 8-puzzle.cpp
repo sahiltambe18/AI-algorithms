@@ -187,6 +187,6 @@ void solve()
 int main()
 {
     solve();
-    cout << fscore(puzzle);
+    //cout << fscore(puzzle);
     return 0;
 }
